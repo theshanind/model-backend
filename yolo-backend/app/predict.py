@@ -35,9 +35,12 @@ CONF       = float(os.getenv("CONF_THRESHOLD", 0.5))
 IOU        = float(os.getenv("IOU_THRESHOLD", 0.45))
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 # ── Guard added: won't crash if file is missing ──
 >>>>>>> b346aa7 (yolo-model-changes)
+=======
+>>>>>>> 6da01f2 (keras-commit)
 if os.path.exists(MODEL_PATH):
     print(f"Loading model from {MODEL_PATH}...")
     model = YOLO(MODEL_PATH)
@@ -48,8 +51,11 @@ else:
 <<<<<<< HEAD
 =======
 
+<<<<<<< HEAD
 >>>>>>> b346aa7 (yolo-model-changes)
 
+=======
+>>>>>>> 6da01f2 (keras-commit)
 def run_prediction(img: np.ndarray) -> dict:
     if model is None:
         raise RuntimeError(f"Detection model not loaded. Expected at: {MODEL_PATH}")
