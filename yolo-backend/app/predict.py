@@ -38,9 +38,13 @@ MODEL_PATH = os.getenv("MODEL_PATH", "model/best.pt")
 CONF       = float(os.getenv("CONF_THRESHOLD", 0.5))
 IOU        = float(os.getenv("IOU_THRESHOLD", 0.45))
 
-print(f"Loading model from {MODEL_PATH}...")
-model = YOLO(MODEL_PATH)
-print("Model loaded.")
+if os.path.exists(MODEL_PATH):
+    print(f"Loading model from {MODEL_PATH}...")
+    model = YOLO(MODEL_PATH)
+    print("Model loaded.")
+else:
+    model = None
+    print(f"WARNING: Detection model not found at {MODEL_PATH}")
 
 def run_prediction(img: np.ndarray) -> dict:
     """
