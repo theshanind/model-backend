@@ -4,6 +4,7 @@ import time
 
 from app.utils import decode_image
 from app.predict import run_prediction
+from app.predict_cls import run_classification
 
 app = FastAPI(
     title="Tea Flush Detection API",
@@ -26,7 +27,7 @@ def root():
         "message": "Tea Detection API is live",
         "models" : {
             "detection"     : "ready",
-            "classification": "coming soon",   # update to 'ready' when model 2 is added
+            "classification": "ready",   # update to 'ready' when model 2 is added
         }
     }
 
@@ -58,7 +59,25 @@ async def predict(file: UploadFile = File(...)):
 # ── Model 2: stub route — returns 501 until you implement it ───────────────
 @app.post("/predict/classify")
 async def predict_classify(file: UploadFile = File(...)):
-    raise HTTPException(
-        status_code=501,
-        detail="Classification model not implemented yet. Coming soon."
-    )
+    if file.content_type not in ["image/jpeg", "image/png", "image/jpg"]:
+        raise HTTPException(
+            status_code=400,
+            detail="Only JPG and PNG images are supported."
+        )
+    
+    start    = time.time()
+    contents = await file.read()
+ 
+    try:
+        img = decode_image(contents)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+ 
+    try:
+        result = run_classification(img)
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+ 
+    result["inference_ms"] = round((time.time() - start) * 1000, 1)
+    result["filename"]     = file.filename
+    return result
