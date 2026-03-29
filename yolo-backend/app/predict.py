@@ -17,6 +17,44 @@ CLASS_DESCRIPTIONS = {
     'banjhi' : 'Dormant shoot — skip, do not pluck',
     'other'  : 'Unclassified shoot',
 }
+# Maps detected flush class → manufacturable tea grades
+FLUSH_TO_GRADE = {
+    '1B-1L': {
+        'grades'     : ['Silver Tips', 'Golden Tips', 'White Tea'],
+        'quality'    : 'Exceptional',
+        'description': 'Finest plucking — produces premium specialty teas',
+    },
+    '1B-1L-F': {
+        'grades'     : ['Silver Tips', 'White Tea', 'FBOP Special'],
+        'quality'    : 'Exceptional',
+        'description': 'Premium plucking with fish leaf — specialty grade',
+    },
+    '1B-2L': {
+        'grades'     : ['OP', 'FOP', 'FBOP', 'BOP'],
+        'quality'    : 'Good',
+        'description': 'Standard fine plucking — produces classic Ceylon grades',
+    },
+    '1B-2L-F': {
+        'grades'     : ['FOP', 'FBOP', 'BOP', 'BOPF'],
+        'quality'    : 'Good',
+        'description': 'Fine plucking with fish leaf — medium-high grade output',
+    },
+    '1B-3L': {
+        'grades'     : ['BOP', 'BOPF', 'BP', 'Dust'],
+        'quality'    : 'Average',
+        'description': 'Medium plucking — suitable for CTC and orthodox grades',
+    },
+    'banjhi': {
+        'grades'     : [],
+        'quality'    : 'None',
+        'description': 'Dormant shoot — not suitable for plucking',
+    },
+    'other': {
+        'grades'     : [],
+        'quality'    : 'Unknown',
+        'description': 'Unclassified — grade cannot be determined',
+    },
+}
 
 PLUCKABLE_CLASSES = {'1B-1L', '1B-1L-F', '1B-2L', '1B-2L-F', '1B-3L'}
 
@@ -63,6 +101,7 @@ def run_prediction(img: np.ndarray) -> dict:
             "confidence_level": get_confidence_color(conf_val),
             "pluckable"       : cls_name in PLUCKABLE_CLASSES,
             "bbox"            : {"x1": x1, "y1": y1, "x2": x2, "y2": y2},
+            "tea_grades"      : FLUSH_TO_GRADE.get(cls_name, {})
         })
 
     detections.sort(key=lambda x: -x["confidence"])
@@ -87,6 +126,12 @@ def run_prediction(img: np.ndarray) -> dict:
     pluckable_list = [d for d in detections if d["pluckable"]]
     skipped_list   = [d for d in detections if not d["pluckable"]]
     top_class      = pluckable_list[0]["class"] if pluckable_list else None
+    
+    all_grades = []
+    for d in pluckable_list:
+        for grade in FLUSH_TO_GRADE.get(d["class"], {}).get("grades", []):
+            if grade not in all_grades:
+                all_grades.append(grade)
 
     summary = {
         "total_shoots"    : len(detections),
@@ -94,6 +139,8 @@ def run_prediction(img: np.ndarray) -> dict:
         "skip_count"      : len(skipped_list),
         "top_flush_class" : top_class,
         "top_description" : CLASS_DESCRIPTIONS.get(top_class, "—") if top_class else "—",
+        "producible_grades" : all_grades,          # ← new
+        "top_quality"       : FLUSH_TO_GRADE.get(top_class, {}).get("quality", "—") if top_class else "—", 
         "recommendation"  : _get_recommendation(pluckable_list, skipped_list),
     }
 
